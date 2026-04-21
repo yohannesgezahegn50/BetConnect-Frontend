@@ -1,35 +1,49 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import API from '../services/api';
 
-const AuthContext = createContext(null);
+const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
+  const [token, setToken] = useState(localStorage.getItem('token'));
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const savedToken = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('user');
+  const savedUser = localStorage.getItem('user');
 
-    if (savedToken && savedUser) {
-      setToken(savedToken);
+    if (savedUser && token) {
       setUser(JSON.parse(savedUser));
     }
     setIsLoading(false);
-  }, []);
+  }, [token]);
 
-  const login = (newToken, userData) => {
-    localStorage.setItem('token', newToken);
+  const login = async (email, password) => {
+    const res = await API.post('/auth/login', {email, password});
+    const {token, ...userData} = res.data;
+
+    localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
-    setToken(newToken);
+    setToken(token);
     setUser(userData);
+    return userData;
+  };
+
+  const register = async (formData) => {
+    const res = await API.post('/auth/register', formData);
+    const { token, ...userData } = res.data;
+
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(userData));
+
+    setToken(token);
+    setUser(userData);
+    return userData;
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setToken(null);
+    localStorage.clear();
     setUser(null);
+    setToken(null);
   };
 
   return (
@@ -37,11 +51,12 @@ export const AuthProvider = ({ children }) => {
       user,
       token,
       login,
+      register,
       logout,
       isAuthenticated: !!user && !!token,
       isLoading
     }}>
-      {children}
+      {!isLoading && children}
     </AuthContext.Provider>
   );
 };

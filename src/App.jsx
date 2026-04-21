@@ -1,67 +1,58 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 
+import PublicNavbar from './components/layout/PublicNavbar';
+import DashboardLayout from './components/layout/DashboardLayout';
+
+import LandingPage from "./pages/LandingPage";
+import BrowsePage from "./pages/BrowsePage";
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import AdminDashboard from './pages/AdminDashboard';
 import AgentDashboard from './pages/AgentDashboard';
+import AgentProfile from './pages/AgentProfile';
 import UserDashboard from './pages/UserDashboard';
+import SavedHomesPage from './pages/SavedHomesPage';
 import AgentPayment from './pages/AgentPayment';
+import AIChatPage from './pages/AIChatPage';
 
-import PublicNavbar from './components/layout/PublicNavbar';
-import AppShell from './components/layout/AppShell';
-
+import RoleGate from './components/auth/RoleGate';
 function App() {
   return (
     <AuthProvider>
       <Router>
         <Routes>
-          {/* ==================== PUBLIC ROUTES ==================== */}
-          <Route 
-            path="/login" 
-            element={
-              <>
-                <PublicNavbar />
-                <LoginPage />
-              </>
-            } 
-          />
-
-          <Route 
-            path="/register" 
-            element={
-              <>
-                <PublicNavbar />
-                <RegisterPage />
-              </>
-            } 
-          />
-
-          {/* ==================== PROTECTED ROUTES ==================== */}
-          {/* These use AppShell (which includes the logo + user navbar) */}
           
-          {/* Admin */}
-          <Route path="/admin" element={<AppShell />}>
-            <Route index element={<AdminDashboard />} />
+
+          <Route element={<><PublicNavbar /><LandingPage /></>} path="/" />
+          <Route element={<><PublicNavbar /><BrowsePage /></>} path="/browse" />
+          <Route element={<><PublicNavbar /><LoginPage /></>} path="/login" />
+          <Route element={<><PublicNavbar /><RegisterPage /></>} path="/register" />
+
+          {/* ==================== 2. PROTECTED DASHBOARDS ==================== */}
+          <Route element={<DashboardLayout />}>
+            
+            <Route path="/ai-chat" element={<AIChatPage />} />
+
+            <Route element={<RoleGate allowedRoles={['admin']} />}>
+              <Route path="/admin" element={<AdminDashboard />} />
+            </Route>
+
+            <Route element={<RoleGate allowedRoles={['agent']} />}>
+              <Route path="/agent" element={<AgentDashboard />} />
+              <Route path="/agent/profile" element={<AgentProfile />} />
+              <Route path="/agent/payment" element={<AgentPayment />} />
+            </Route>
+
+            <Route element={<RoleGate allowedRoles={['user']} />}>
+              <Route path="/user" element={<UserDashboard />} />
+              <Route path="/user/saved" element={<SavedHomesPage />} />
+            </Route>
+
           </Route>
 
-          {/* Agent Payment - Must pay first */}
-          <Route path="/agent/payment" element={<AppShell />}>
-            <Route index element={<AgentPayment />} />
-          </Route>
-
-          {/* Agent Dashboard - After payment */}
-          <Route path="/agent" element={<AppShell />}>
-            <Route index element={<AgentDashboard />} />
-          </Route>
-
-          {/* User Dashboard */}
-          <Route path="/user" element={<AppShell />}>
-            <Route index element={<UserDashboard />} />
-          </Route>
-
-          {/* Fallback Route */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+          
         </Routes>
       </Router>
     </AuthProvider>

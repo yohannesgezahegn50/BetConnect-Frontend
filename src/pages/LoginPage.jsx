@@ -12,32 +12,22 @@ export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    try{
+      const loggedUser = await login(email, password);
 
-    setTimeout(() => {
-      const fakeUser = {
-        id: 'demo-' + Date.now(),
-        name: email.split('@')[0] || 'User',
-        email: email,
-        role: roleType === 'agent' ? 'agent' : 'user'
-      };
-
-      const fakeToken = 'demo-jwt-token-' + Date.now();
-
-      login(fakeToken, fakeUser);
-
-      // Agent must pay first
-      if (fakeUser.role === 'agent') {
-        navigate('/agent/payment');
-      } else {
-        navigate('/user');
-      }
-
+      if(loggedUser.role === 'admin') navigate('/admin');
+      else if(loggedUser.role === 'agent'){
+        navigate('/agent');
+      }else navigate('/user');
+    }catch(err){
+      setError(err.response?.data?.message || 'Login failed. Please try again.');
+    }finally{
       setLoading(false);
-    }, 800);
+    }
   };
 
   return (
